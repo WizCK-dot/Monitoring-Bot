@@ -1,4 +1,2 @@
 telethon
-aiofiles
-selenium
-undetected-chromedriver
+discord
