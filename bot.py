@@ -112,15 +112,15 @@ async def handle_message(event, client):
                 if sender_username:
                     # If the user has a username, you can store that link as a field
                     embed.add_field(
-                        name="User",
+                        name="User (You can DM him by clicking the User name below)",
                         value=f"[{sender_name}](https://t.me/{sender_username})",
                         inline=False
                     )
                 else:
                     # Fallback: Show numeric ID
                     embed.add_field(
-                        name="User",
-                        value=f"{sender_name} (ID: {sender_id})",
+                        name="User (You can DM him by clicking the link below)",
+                        value=f"{sender_name} (Phone Number: {sender_id})",
                         inline=False
                     )
 
@@ -134,7 +134,7 @@ async def handle_message(event, client):
                         if media.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                             file = discord.File(media, filename=os.path.basename(media))
                             embed.set_image(url=f"attachment://{os.path.basename(media)}")
-                            await channel.send(file=file, embed=embed)
+                            await channel.send(content="@here",file=file, embed=embed)
                         else:
                             # If it's not an image, just attach it separately
                             await channel.send(content="Here's the reposted media:", file=discord.File(media))
@@ -142,7 +142,7 @@ async def handle_message(event, client):
                             await channel.send(embed=embed)
                     else:
                         # No media, send just the embed
-                        await channel.send(embed=embed)
+                        await channel.send(content="@here", embed=embed)
 
                     print('Message sent to Discord successfully!')
                 except Exception as e:
