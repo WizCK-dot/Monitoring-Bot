@@ -35,17 +35,13 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 def highlight_words_in_text(text, words):
     """
     Highlights each monitored word in the given text (case-insensitive),
-    surrounding it with ** to make it bold in Markdown (both Discord and Telegram).
+    surrounding it with ** to make it bold in Markdown (works for both Discord and Telegram).
     """
-    # Create a pattern that matches any of the words regardless of case,
-    # using word boundaries (\b) to avoid partial matches.
     pattern = r'(' + '|'.join(re.escape(word) for word in words) + r')'
     
-    # This function will replace each found match with the bold version
     def bold_replacement(match):
         return f"**{match.group(1)}**"
 
-    # Use re.IGNORECASE to do a case-insensitive search
     highlighted_text = re.sub(pattern, bold_replacement, text, flags=re.IGNORECASE)
     return highlighted_text
 
@@ -68,17 +64,29 @@ async def handle_message(event, client):
         # Get the sender's information
         sender = await event.get_sender()
         sender_name = sender.first_name if sender else "Unknown"
-        print(f"Message sent by: {sender_name}")
+        sender_id = sender.id if sender else 0
+        sender_username = sender.username  # May be None if no username set
+        print(f"Message sent by: {sender_name}, ID: {sender_id}, Username: {sender_username}")
 
         # Check if any of the target words are in the message (case-insensitive)
         if any(word.lower() in message_text.lower() for word in monitor_words):
             print("Target word found in the message.")
             
-            # Highlight target words in bold
+            # Highlight target words
             highlighted_text = highlight_words_in_text(message_text, monitor_words)
+
+            ########################################
+            # CREATE A "DISPLAY NAME" WITH LINK OR ID
+            ########################################
+            # If sender_username is not None, we can create a Telegram link to that user
+            if sender_username:
+                display_name = f"[{sender_name}](https://t.me/{sender_username})"
+            else:
+                # Fallback to numeric ID if there's no username
+                display_name = f"{sender_name} (ID: {sender_id})"
             
-            # Create a final text that includes the sender name
-            final_text = f"**{sender_name}** said:\n\n{highlighted_text}"
+            # Add a bit of structure to the final text
+            final_text = f"**{display_name}** said:\n\n{highlighted_text}"
             print(f"Styled message text: {final_text}")
             
             # Handle media if present
@@ -99,26 +107,43 @@ async def handle_message(event, client):
                     description=highlighted_text,
                     color=discord.Color.blue()
                 )
-                embed.set_author(name=sender_name)
                 
+                # You can add the ID or a clickable link as part of the embed fields
+                if sender_username:
+                    # If the user has a username, you can store that link as a field
+                    embed.add_field(
+                        name="User",
+                        value=f"[{sender_name}](https://t.me/{sender_username})",
+                        inline=False
+                    )
+                else:
+                    # Fallback: Show numeric ID
+                    embed.add_field(
+                        name="User",
+                        value=f"{sender_name} (ID: {sender_id})",
+                        inline=False
+                    )
+
                 # Optionally, add a footer or more info
-                embed.set_footer(text="Reposted via @wizard")
+                embed.set_footer(text="Reposted via Telethon & Discord.py")
 
                 try:
                     if media:
-                        # If you have an image, you could set it as embed thumbnail or image
+                        # If it's an image, you could set it as embed image
+                        # or just send as a file along with the embed
                         if media.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                             file = discord.File(media, filename=os.path.basename(media))
                             embed.set_image(url=f"attachment://{os.path.basename(media)}")
                             await channel.send(file=file, embed=embed)
                         else:
-                            # If it's not an image, just attach as a file
-                            file = discord.File(media, filename=os.path.basename(media))
-                            await channel.send(embed=embed, file=file)
+                            # If it's not an image, just attach it separately
+                            await channel.send(content="Here's the reposted media:", file=discord.File(media))
+                            # Then also send the embed
+                            await channel.send(embed=embed)
                     else:
-                        # Text-only embed
+                        # No media, send just the embed
                         await channel.send(embed=embed)
-                    
+
                     print('Message sent to Discord successfully!')
                 except Exception as e:
                     print(f'Failed to send message to Discord: {e}')
@@ -128,37 +153,37 @@ async def handle_message(event, client):
             ####################################
             # SEND TO TELEGRAM
             ####################################
-            # Create tasks for posting messages to multiple Telegram channels
             tasks = []
             for post_channel in telegram_post_channels:
                 try:
                     if media:
-                        # Repost with media and styled text in Markdown
+                        # Repost with media (image, doc, etc.) + caption in Markdown
                         tasks.append(
                             client.send_file(
                                 post_channel,
-                                media,
+                                file=media,
                                 caption=final_text,
-                                parse_mode='markdown'
+                                parse_mode='Markdown'
                             )
                         )
-                        print(f"Task added to post message (with media) to {post_channel}")
+                        print(f"Task added to post message with media to Telegram channel {post_channel}")
                     else:
-                        # Repost text-only message with Markdown
+                        # Repost text-only message using Markdown
                         tasks.append(
                             client.send_message(
                                 post_channel,
                                 final_text,
-                                parse_mode='markdown'
+                                parse_mode='Markdown'
                             )
                         )
-                        print(f"Task added to post text-only message to {post_channel}")
+                        print(f"Task added to post text-only message to Telegram channel {post_channel}")
                 except Exception as e:
                     print(f"Failed to create post task for {post_channel}: {e}")
             
             # Execute all tasks concurrently
             if tasks:
                 await asyncio.gather(*tasks)
+                print("All Telegram repost tasks completed.")
             
             # Cleanup temporary media file
             if media:
@@ -192,6 +217,7 @@ async def main():
     try:
         await client.start(phone=phone_number)
         print("Userbot is running and monitoring channels...")
+
         print("Starting Discord bot...")
         try:
             await bot.start(discord_token)
@@ -209,13 +235,11 @@ async def on_ready():
     post_channel = bot.get_channel(discord_post_channels)
     if post_channel:
         try:
-            await post_channel.send('Hello, this is a message from the bot!')
-            print('Message sent successfully!')
+            print('Bot is ready to send messages to Discord!')
         except Exception as e:
             print(f'Failed to send message: {e}')
     else:
         print('Channel not found!')
-    
 
 if __name__ == "__main__":
     print("Script started...")
