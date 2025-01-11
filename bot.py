@@ -21,6 +21,7 @@ phone_number = settings['phone_number']
 monitored_channels = settings['monitored_channels']
 telegram_post_channels = settings['telegram_post_channels']
 monitor_words = settings.get('monitor_words', [])
+block_keyword = settings.get('block_keyword', [])
 discord_token = settings['discord_token']
 discord_post_channels = settings['discord_post_channels']
 
@@ -66,6 +67,16 @@ async def handle_message(event, client):
         sender_name = sender.first_name if sender else "Unknown"
         sender_id = sender.id if sender else 0
         sender_username = sender.username  # May be None if no username set
+
+        # Get message ID and chat details
+        message_id = event.message.id
+        chat_id = event.chat_id
+        chat_title = event.chat.title or "Unknown Chat"
+
+        # Determine the channel username for the message link
+        chat_username = event.chat.username  # None for private chats
+        message_link = (f"https://t.me/{chat_username}/{message_id}" if chat_username
+                        else f"https://t.me/c/{str(chat_id)[4:]}/{message_id}")
         print(f"Message sent by: {sender_name}, ID: {sender_id}, Username: {sender_username}")
 
         # Check if any of the target words are in the message (case-insensitive)
@@ -86,7 +97,25 @@ async def handle_message(event, client):
                 display_name = f"{sender_name} (ID: {sender_id})"
             
             # Add a bit of structure to the final text
-            final_text = f"**{display_name}** said:\n\n{highlighted_text}"
+            # Check if any words are in the block list
+            if any(word.lower() in block_keyword for word in monitor_words):
+                print("Blocked keyword detected. Message will not be reposted.")
+                return
+
+            # Highlight target words
+            highlighted_text = highlight_words_in_text(message_text, monitor_words)
+
+            # Add structure to the final text
+            final_text = (
+                f"📢 **New Job post Found!** 📢\n\n"
+                f"**Sender**: {display_name}\n"
+                f"**Channel**: [{chat_title}]({message_link})\n\n"
+                f"--------------------------------------\n\n"
+                f"{highlighted_text}\n\n"
+                f"--------------------------------------\n\n"
+                f"🔗 [Click here to view the original message]({message_link})"
+            )
+
             print(f"Styled message text: {final_text}")
             
             # Handle media if present
@@ -103,29 +132,13 @@ async def handle_message(event, client):
             if channel:
                 # Create a Discord embed to make it "beautiful"
                 embed = discord.Embed(
-                    title="New Monitored Message",
-                    description=highlighted_text,
+                    title="A new post has been posted on Telegram",
+                    description=final_text,
                     color=discord.Color.blue()
                 )
-                
-                # You can add the ID or a clickable link as part of the embed fields
-                if sender_username:
-                    # If the user has a username, you can store that link as a field
-                    embed.add_field(
-                        name="User (You can DM him by clicking the User name below)",
-                        value=f"[{sender_name}](https://t.me/{sender_username})",
-                        inline=False
-                    )
-                else:
-                    # Fallback: Show numeric ID
-                    embed.add_field(
-                        name="User (You can DM him by clicking the link below)",
-                        value=f"{sender_name} (Phone Number: {sender_id})",
-                        inline=False
-                    )
 
                 # Optionally, add a footer or more info
-                embed.set_footer(text="Reposted via Telethon & Discord.py")
+                embed.set_footer(text="Reposted via @Wizard")
 
                 try:
                     if media:
