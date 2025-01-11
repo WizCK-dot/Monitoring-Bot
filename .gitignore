@@ -1,0 +1,9 @@
+# dependencies
+settings.json
+session_name.session-journal
+
+# testing
+/__pycache__
+
+# production
+session_name.session

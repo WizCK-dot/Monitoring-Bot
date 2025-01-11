@@ -1,0 +1,4 @@
+telethon
+aiofiles
+selenium
+undetected-chromedriver
