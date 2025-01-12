@@ -1,6 +1,0 @@
-2025-01-13 00:33:53,404 - PyNaCl is not installed, voice will NOT be supported
-2025-01-13 00:33:53,408 - Connecting to 149.154.167.92:443/TcpFull...
-2025-01-13 00:33:53,756 - Connection to 149.154.167.92:443/TcpFull complete!
-2025-01-13 00:33:56,107 - logging in using static token
-2025-01-13 00:33:56,108 - Privileged message content intent is missing, commands may not work as expected.
-2025-01-13 00:34:00,906 - Shard ID None has connected to Gateway (Session ID: 15233bdfed9b990844c8ca60d67639b0).
