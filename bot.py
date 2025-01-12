@@ -5,6 +5,9 @@ import os
 import json
 import discord
 from discord.ext import commands
+import logging
+
+logging.basicConfig(filename='messages.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 # Load settings from the JSON configuration file
 with open('settings.json', 'r') as file:
@@ -70,6 +73,8 @@ async def handle_message(event, client):
         # Get original text
         message_text = event.message.message or ""
         print(f"Original message text: {message_text}")
+        # Save the message in the log
+        logging.info(f"Message logged: {message_text}")
         
         if len(message_text) > 700 or count_emoticons(message_text) > 8:
             print("Message is too long or contains too many emoticons, ignoring.")

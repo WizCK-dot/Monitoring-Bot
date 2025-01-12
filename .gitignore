@@ -6,4 +6,5 @@ session_name.session-journal
 /__pycache__
 
 # production
+messages.log
 session_name.session
