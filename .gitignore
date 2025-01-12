@@ -4,7 +4,7 @@ session_name.session-journal
 
 # testing
 /__pycache__
-
+messages.log
 # production
 messages.log
 session_name.session
