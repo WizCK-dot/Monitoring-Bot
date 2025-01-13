@@ -3,6 +3,7 @@ settings.json
 session_name.session-journal
 
 # testing
+src/__pycache__
 /__pycache__
 messages.log
 
