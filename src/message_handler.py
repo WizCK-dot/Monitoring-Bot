@@ -30,10 +30,8 @@ class MessageHandler:
         )
 
     async def should_process_message(self, message_text):
-        # Convert the message to lowercase once
         message_lower = message_text.lower()
 
-        # Create sets of block and monitor words in lowercase
         block_keywords = {kw.lower() for kw in self.config['block_keyword']}
         monitor_words = {mw.lower() for mw in self.config['monitor_words']}
 
@@ -54,20 +52,15 @@ class MessageHandler:
             if not await self.should_process_message(message_text):
                 return
 
-            # Get message details
             sender = await event.get_sender()
             message_info = await self._get_message_info(event, sender)
             
-            # Format the message
             final_text = self.format_message(**message_info)
             
-            # Handle media
             media = await self._handle_media(event)
             
-            # Send messages
             await self._send_to_platforms(final_text, media)
             
-            # Cleanup
             cleanup_media(media)
 
         except Exception as e:
@@ -155,14 +148,12 @@ class MessageHandler:
         """Send messages to both Discord and Telegram"""
         tasks = []
 
-        # Discord task
         tasks.append(self._send_to_discord(
             self.config['discord_post_channels'],
             final_text,
             media
         ))
 
-        # Telegram tasks
         for channel in self.config['telegram_post_channels']:
             tasks.append(self._send_to_telegram(
                 channel,
@@ -170,10 +161,8 @@ class MessageHandler:
                 media
             ))
 
-        # Execute all tasks concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # Log any errors
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logging.error(f"Task {i} failed: {result}") 

@@ -10,7 +10,6 @@ from src.handle_message import handle_message
 
 logging.basicConfig(filename='messages.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# Load settings from the JSON configuration file
 with open('settings.json', 'r') as file:
     settings = json.load(file)
 
@@ -61,7 +60,6 @@ async def main():
 
     print("Starting Discord bot...")
     try:
-        # Run both Telegram and Discord tasks in parallel
         await asyncio.gather(
             client.run_until_disconnected(),
             bot.start(discord_token)
@@ -83,5 +81,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     print("Script started...")
-    # Use asyncio.run for a clean, concurrent setup
     asyncio.run(main())
