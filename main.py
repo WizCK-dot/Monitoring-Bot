@@ -1,4 +1,3 @@
-import re
 import asyncio
 from telethon import TelegramClient, events
 import os
@@ -50,23 +49,25 @@ async def new_message_handler(event):
 
 async def main():
     """
-    Main function to start the Telegram client.
+    Main function to concurrently start the Telegram client and Discord bot.
     """
     print("Starting Telegram client...")
     try:
         await client.start(phone=phone_number)
         print("Userbot is running and monitoring channels...")
-
-        print("Starting Discord bot...")
-        try:
-            await bot.start(discord_token)
-        except Exception as e:
-            print(f"Error starting Discord bot: {e}")
     except Exception as e:
         print(f"Error starting Telegram client: {e}")
         return
 
-    await client.run_until_disconnected()
+    print("Starting Discord bot...")
+    try:
+        # Run both Telegram and Discord tasks in parallel
+        await asyncio.gather(
+            client.run_until_disconnected(),
+            bot.start(discord_token)
+        )
+    except Exception as e:
+        print(f"Error running Telegram or Discord tasks: {e}")
 
 @bot.event
 async def on_ready():
@@ -82,4 +83,5 @@ async def on_ready():
 
 if __name__ == "__main__":
     print("Script started...")
-    client.loop.run_until_complete(main())
+    # Use asyncio.run for a clean, concurrent setup
+    asyncio.run(main())
