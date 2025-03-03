@@ -30,14 +30,21 @@ class MessageHandler:
         )
 
     async def should_process_message(self, message_text):
-        if (len(message_text) > 700 or 
-            count_emoticons(message_text) > 8 or
-            any(keyword.lower() in message_text.lower() 
-                for keyword in self.config['block_keyword'])):
+        # Convert the message to lowercase once
+        message_lower = message_text.lower()
+
+        # Create sets of block and monitor words in lowercase
+        block_keywords = {kw.lower() for kw in self.config['block_keyword']}
+        monitor_words = {mw.lower() for mw in self.config['monitor_words']}
+
+        if (
+            len(message_text) > 700
+            or count_emoticons(message_text) > 8
+            or any(kw in message_lower for kw in block_keywords)
+        ):
             return False
-        
-        return any(word.lower() in message_text.lower() 
-                  for word in self.config['monitor_words'])
+
+        return any(mw in message_lower for mw in monitor_words)
 
     async def handle_message(self, event):
         try:
