@@ -10,10 +10,6 @@ from src.utils import count_emoticons, highlight_words_in_text
 with open('settings.json', 'r') as file:
     settings = json.load(file)
 
-##########################################
-# USER CONFIGURATION
-##########################################
-
 api_id = settings['api_id']
 api_hash = settings['api_hash']
 phone_number = settings['phone_number']
@@ -25,10 +21,6 @@ block_keyword = settings.get('block_keyword', [])
 discord_token = settings['discord_token']
 discord_post_channels = settings['discord_post_channels']
 block_keyword = settings.get('block_keyword', [])
-
-##########################################
-# MESSAGE HANDLING
-##########################################
 
 async def handle_message(event, client, bot):
     """
@@ -68,9 +60,6 @@ async def handle_message(event, client, bot):
             
             highlighted_text = highlight_words_in_text(message_text, monitor_words)
 
-            ########################################
-            # CREATE A "DISPLAY NAME" WITH LINK OR ID
-            ########################################
             if sender_username:
                 display_name = f"[{sender_name}](https://t.me/{sender_username})"
             else:
@@ -96,9 +85,6 @@ async def handle_message(event, client, bot):
                 media = await event.download_media()
                 print(f"Media downloaded: {media}")
 
-            ####################################
-            # SEND TO DISCORD
-            ####################################
             channel = bot.get_channel(discord_post_channels)
             if channel:
                 embed = discord.Embed(
@@ -127,9 +113,6 @@ async def handle_message(event, client, bot):
             else:
                 print('Discord channel not found!')
             
-            ####################################
-            # SEND TO TELEGRAM
-            ####################################
             tasks = []
             for post_channel in telegram_post_channels:
                 try:
