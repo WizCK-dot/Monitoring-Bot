@@ -30,7 +30,7 @@ A Python-based bot that monitors specified Telegram channels for messages contai
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/BJ-dev0706/telegram-discord-monitor.git
+   git clone https://github.com/WizCK-dot/telegram-discord-monitor.git
    cd telegram-discord-monitor
    ```
 
